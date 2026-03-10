@@ -1,4 +1,4 @@
-# gdgs
+# gdgs:godot-gaussian-splatting
 
 [English README](README.md)
 
