@@ -16,6 +16,9 @@ var _gaussian: GaussianResource
 var _local_aabb: AABB = AABB()
 var _aabb_valid := false
 
+func _init() -> void:
+	rotation_degrees = Vector3(0.0, 0.0, -180.0)
+
 func _enter_tree() -> void:
 	set_notify_transform(true)
 	add_to_group("gaussian_splat_nodes")
