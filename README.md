@@ -4,9 +4,11 @@ Maintainer: ReconWorldLab
 
 [简体中文说明](README_CN.md)
 
+Current plugin version: `1.1.0`
+
 `gdgs` is a Godot 4 Gaussian Splatting plugin built around `CompositorEffect` and compute shaders.
 
-It imports supported 3D Gaussian Splat `.ply` assets, places them in a scene through `GaussianSplatNode`, and composites the result with the regular 3D scene using scene depth.
+It imports supported 3D Gaussian Splat assets, places them in a scene through `GaussianSplatNode`, and composites the result with the regular 3D scene using scene depth.
 
 ## Demo
 
@@ -16,7 +18,10 @@ It imports supported 3D Gaussian Splat `.ply` assets, places them in a scene thr
 
 ## Features
 
-- Import supported Gaussian Splat `.ply` files as Godot resources.
+- Import supported Gaussian assets from `.ply`, `.compressed.ply`, `.splat`, and `.sog`.
+- Convert different source formats into a shared GPU-ready Gaussian resource.
+- Center imported Gaussian data by default during resource build.
+- Apply a default `-180` degree Z rotation on `GaussianSplatNode`.
 - Render one or more `GaussianSplatNode` instances in the same scene.
 - Composite Gaussian Splat rendering with standard Godot 3D content through `WorldEnvironment.compositor`.
 - Mix Gaussian results against the scene depth buffer.
@@ -28,7 +33,7 @@ It imports supported 3D Gaussian Splat `.ply` assets, places them in a scene thr
 - Godot `4.4` or newer.
 - `Forward Plus` rendering backend.
 - A desktop GPU and driver with compute shader support.
-- A supported binary Gaussian Splat `.ply` file.
+- A supported Gaussian asset in one of the formats listed below.
 
 ## Installation
 
@@ -42,7 +47,7 @@ After installation, the plugin root should be available at `res://addons/gdgs`.
 
 ## Quick Start
 
-1. Add a supported `.ply` file to your project. The repository includes `demo.ply` as a sample asset.
+1. Add a supported Gaussian asset to your project. The repository includes `demo.ply`, `demo.compressed.ply`, and `demo.sog` as sample assets.
 2. Wait for Godot to import it into a resource.
 3. Add a `GaussianSplatNode` to your scene.
 4. Assign the imported resource to the `gaussian` property of `GaussianSplatNode`.
@@ -55,7 +60,9 @@ After installation, the plugin root should be available at `res://addons/gdgs`.
 
 - `GaussianSplatNode` stores transform and resource references. Actual rendering is performed by the compositor pass, not by Godot's standard mesh pipeline.
 - Multiple `GaussianSplatNode` instances are supported and are rendered together in the same Gaussian pass.
-- If you replace the source `.ply` file contents, reimport it in Godot so the generated resource stays in sync.
+- Imported Gaussian data is centered around its average position during resource build, so scenes start closer to the origin by default.
+- `GaussianSplatNode` starts with a default Z rotation of `-180` degrees. If your source data already matches your scene orientation, adjust the node transform after adding it.
+- If you replace the source asset contents, reimport it in Godot so the generated resource stays in sync.
 
 ## Post Process Parameters
 
@@ -75,9 +82,11 @@ The compositor effect script is `res://addons/gdgs/postprocess.gd`.
 - `Scene Depth`: Scene depth buffer.
 - `Depth Reject Mask`: Shows which GS pixels are rejected by depth testing.
 
-## Supported PLY Format
+## Supported Formats
 
-The importer expects a Gaussian Splat PLY with the following properties:
+### Standard Gaussian `.ply`
+
+The importer supports binary little-endian Gaussian Splat `.ply` files with these properties:
 
 - Position: `x`, `y`, `z`
 - DC color coefficients: `f_dc_0`, `f_dc_1`, `f_dc_2`
@@ -86,23 +95,39 @@ The importer expects a Gaussian Splat PLY with the following properties:
 - Scale: `scale_0`, `scale_1`, `scale_2`
 - Rotation: `rot_0`, `rot_1`, `rot_2`, `rot_3`
 
-This importer is meant for 3D Gaussian Splatting style assets, not generic point cloud `.ply` files.
+### `.compressed.ply`
+
+- Supported through the dedicated compressed PLY decoder.
+- Detected automatically from the `.compressed.ply` suffix or packed vertex properties.
+
+### Legacy `.splat`
+
+- Supported for older Gaussian Splat record-based assets.
+
+### `.sog`
+
+- Supports SOG version `2` archives.
+
+This importer is meant for Gaussian Splatting style assets, not generic point cloud files.
 
 ## Repository Layout
 
 - `gdgs/`: Plugin root in this repository. Copy this folder into your Godot project as `addons/gdgs`.
-- `gdgs/gaussian`: PLY importer and Gaussian resource definitions.
+- `gdgs/gaussian`: Importers, decoders, and Gaussian resource definitions.
 - `gdgs/node`: Scene node and editor gizmo.
 - `gdgs/rendering`: Render manager, rendering context, and compute shaders.
 - `gdgs/postprocess.gd`: Compositor effect entry point.
-- `demo.ply`: Sample Gaussian asset for import testing.
+- `demo.ply`: Sample standard Gaussian PLY asset.
+- `demo.compressed.ply`: Sample compressed Gaussian PLY asset.
+- `demo.sog`: Sample SOG asset.
 
 ## Known Limitations
 
 - The plugin currently targets desktop `Forward Plus` rendering only.
 - Rendering depends on Godot's compositor and compute pipeline, so compatibility and mobile renderers are not supported.
 - The render manager currently lives as a shared root-level runtime manager, so very complex editor multi-scene or multi-viewport workflows may still need additional validation.
-- The importer expects a specific Gaussian Splat property layout.
+- Standard `.ply` support expects binary little-endian Gaussian Splat data, not arbitrary point cloud layouts.
+- `.sog` support currently targets version `2` archives only.
 
 ## Acknowledgements
 
