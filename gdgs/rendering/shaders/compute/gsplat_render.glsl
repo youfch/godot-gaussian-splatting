@@ -56,7 +56,10 @@ shared uint shared_t;
 const float INVALID_DEPTH = 1e20;
 
 void main() {
-    shared_t = ~0; // Initialize shared alpha to MAX_UINT
+    if (gl_LocalInvocationIndex == 0) {
+        shared_t = ~0u; // Initialize shared alpha to MAX_UINT
+    }
+    barrier();
 	const ivec2 dims = imageSize(rasterized_image);
 	const uvec2 grid_size = (dims + TILE_SIZE - 1) / TILE_SIZE;
     
@@ -93,7 +96,9 @@ void main() {
         color_tile[id_local] = data.color;
         image_pos_tile[id_local] = data.image_pos;
         depth_tile[id_local] = data.depth_data.x;
-        shared_t = 0; // Reset shared alpha
+        if (id_local == 0) {
+            shared_t = 0u; // Reset shared alpha
+        }
         barrier();
 
         for (uint j = 0; pixel_in_bounds && j < chunk_size && t > MIN_ALPHA; ++j) {
