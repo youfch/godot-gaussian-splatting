@@ -2,9 +2,9 @@
 
 Maintainer: ReconWorldLab
 
-[简体中文说明](README_CN.md)
+[Chinese README](README_CN.md)
 
-Current plugin version: `1.1.0`
+Current plugin version: `2.0.0`
 
 `gdgs` is a Godot 4 Gaussian Splatting plugin built around `CompositorEffect` and compute shaders.
 
@@ -12,16 +12,47 @@ It imports supported 3D Gaussian Splat assets, places them in a scene through `G
 
 ## Demo
 
-![Demo screenshot](image.png)
+![Demo screenshot](samples/media/demo.png)
 
 - Video: [Bilibili - BV1NRwFzYEVc](https://www.bilibili.com/video/BV1NRwFzYEVc)
+
+## Version History
+
+Versioning note: the historical `1.0` release is normalized here as `1.0.0`.
+
+### 2.0.0
+
+- Reorganized the repository into the shipping layout: `addons/gdgs`, `docs`, and `samples`.
+- Split the render stack into focused modules for manager lifetime, scene registry, GPU state caching, and frame execution.
+- Renamed and relocated the main runtime and editor entry files to match the new module layout.
+- Fixed the macOS and Metal blank-render issue by pre-sizing indirect dispatch dimensions on the CPU.
+- Fixed Godot 4.4 regressions around descriptor set typing, compute list typing, and compositor overlay teardown.
+- Fixed the `GaussianSplatNode` transform duplication and serialization bug so duplicated nodes no longer receive orientation or scale handling twice.
+- Restored transform consistency between editor gizmos and runtime rendering after the orientation fix.
+- Updated the documentation and sample references for the new structure.
+
+### 1.1.0
+
+- Added import support for `.compressed.ply`, `.splat`, and `.sog`.
+- Unified multiple input formats into a shared GPU-ready Gaussian resource build pipeline.
+- Centered imported Gaussian data during resource build for easier placement in scenes.
+- Added default Z-axis orientation correction behavior for newly added `GaussianSplatNode` instances.
+- Expanded the README, sample coverage, and plugin metadata for the `1.1.0` release.
+
+### 1.0.0
+
+- Initial public plugin release.
+- Added standard Gaussian `.ply` import support.
+- Added compositor-based Gaussian rendering with scene-depth compositing.
+- Added multi-node scene support.
+- Added editor preview, gizmo display, and debug view support.
 
 ## Features
 
 - Import supported Gaussian assets from `.ply`, `.compressed.ply`, `.splat`, and `.sog`.
 - Convert different source formats into a shared GPU-ready Gaussian resource.
 - Center imported Gaussian data by default during resource build.
-- Apply a default `-180` degree Z rotation on `GaussianSplatNode`.
+- Initialize new `GaussianSplatNode` instances with a default `-180` degree Z correction when they enter the tree in the default orientation.
 - Render one or more `GaussianSplatNode` instances in the same scene.
 - Composite Gaussian Splat rendering with standard Godot 3D content through `WorldEnvironment.compositor`.
 - Mix Gaussian results against the scene depth buffer.
@@ -38,7 +69,7 @@ It imports supported 3D Gaussian Splat assets, places them in a scene through `G
 ## Installation
 
 1. Create an `addons` folder in your Godot project if it does not already exist.
-2. Copy the `gdgs` folder from this repository into your project as `addons/gdgs`.
+2. Copy the `addons/gdgs` folder from this repository into your project as `addons/gdgs`.
 3. Open the project in Godot.
 4. Go to `Project > Project Settings > Plugins`.
 5. Enable the `gdgs` plugin.
@@ -47,13 +78,13 @@ After installation, the plugin root should be available at `res://addons/gdgs`.
 
 ## Quick Start
 
-1. Add a supported Gaussian asset to your project. The repository includes `demo.ply`, `demo.compressed.ply`, and `demo.sog` as sample assets.
+1. Add a supported Gaussian asset to your project. The repository includes `samples/assets/demo.ply`, `samples/assets/demo.compressed.ply`, and `samples/assets/demo.sog` as sample assets.
 2. Wait for Godot to import it into a resource.
 3. Add a `GaussianSplatNode` to your scene.
 4. Assign the imported resource to the `gaussian` property of `GaussianSplatNode`.
 5. Add a `WorldEnvironment` node to the scene.
 6. Create a `Compositor` resource on `WorldEnvironment.compositor`.
-7. Add a `CompositorEffect` to that `Compositor`, and set its script to `res://addons/gdgs/postprocess.gd`.
+7. Add a `CompositorEffect` to that `Compositor`, and set its script to `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`.
 8. Run the scene.
 
 ## Scene Setup Notes
@@ -61,12 +92,12 @@ After installation, the plugin root should be available at `res://addons/gdgs`.
 - `GaussianSplatNode` stores transform and resource references. Actual rendering is performed by the compositor pass, not by Godot's standard mesh pipeline.
 - Multiple `GaussianSplatNode` instances are supported and are rendered together in the same Gaussian pass.
 - Imported Gaussian data is centered around its average position during resource build, so scenes start closer to the origin by default.
-- `GaussianSplatNode` starts with a default Z rotation of `-180` degrees. If your source data already matches your scene orientation, adjust the node transform after adding it.
+- A newly added `GaussianSplatNode` applies a one-time default Z correction when it enters the tree with the identity orientation. This keeps duplicated and serialized nodes from receiving the correction twice.
 - If you replace the source asset contents, reimport it in Godot so the generated resource stays in sync.
 
 ## Post Process Parameters
 
-The compositor effect script is `res://addons/gdgs/postprocess.gd`.
+The compositor effect script is `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`.
 
 - `alpha_cutoff`: Pixels with alpha below this threshold are ignored during final composition.
 - `depth_bias`: Small bias used when comparing GS depth against scene depth.
@@ -112,14 +143,13 @@ This importer is meant for Gaussian Splatting style assets, not generic point cl
 
 ## Repository Layout
 
-- `gdgs/`: Plugin root in this repository. Copy this folder into your Godot project as `addons/gdgs`.
-- `gdgs/gaussian`: Importers, decoders, and Gaussian resource definitions.
-- `gdgs/node`: Scene node and editor gizmo.
-- `gdgs/rendering`: Render manager, rendering context, and compute shaders.
-- `gdgs/postprocess.gd`: Compositor effect entry point.
-- `demo.ply`: Sample standard Gaussian PLY asset.
-- `demo.compressed.ply`: Sample compressed Gaussian PLY asset.
-- `demo.sog`: Sample SOG asset.
+- `addons/gdgs`: Plugin root in this repository.
+- `addons/gdgs/importers`: Import plugins, parsers, decoders, and resource builders.
+- `addons/gdgs/runtime`: Runtime nodes, resources, compositor code, and render modules.
+- `addons/gdgs/editor`: Editor-only integrations such as gizmos.
+- `docs`: Architecture notes and internal review records.
+- `samples/assets`: Sample Gaussian assets.
+- `samples/media`: Screenshots and debug images.
 
 ## Known Limitations
 

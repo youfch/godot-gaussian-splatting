@@ -4,7 +4,7 @@
 
 [English README](README.md)
 
-当前插件版本：`1.1.0`
+当前插件版本：`2.0.0`
 
 `gdgs` 是一个基于 `CompositorEffect` 和 compute shader 的 Godot 4 Gaussian Splatting 插件。
 
@@ -12,18 +12,49 @@
 
 ## 演示
 
-![演示截图](image.png)
+![演示截图](samples/media/demo.png)
 
-- 视频演示：[Bilibili - BV1NRwFzYEVc](https://www.bilibili.com/video/BV1NRwFzYEVc)
+- 视频： [Bilibili - BV1NRwFzYEVc](https://www.bilibili.com/video/BV1NRwFzYEVc)
+
+## 版本记录
+
+版本说明：历史中的 `1.0` 在这里按 semver 统一记为 `1.0.0`。
+
+### 2.0.0
+
+- 仓库结构重组为正式发布形态：`addons/gdgs`、`docs`、`samples`。
+- 渲染链路按职责拆分为管理器生命周期、场景注册、GPU 状态缓存和逐帧执行四个模块。
+- 主要运行时与编辑器入口脚本全部按新结构重命名和重排。
+- 修复了 macOS / Metal 下 indirect dispatch 导致整条 GS 渲染链空白的问题。
+- 修复了 Godot 4.4 下 descriptor set 类型、compute list 类型和 overlay 释放相关的回归。
+- 修复了 `GaussianSplatNode` 复制与序列化时变换被重复处理的问题。
+- 修复了朝向修正之后 gizmo 与实际渲染不一致的问题。
+- 同步更新了文档、示例路径和仓库说明。
+
+### 1.1.0
+
+- 新增 `.compressed.ply`、`.splat` 和 `.sog` 导入支持。
+- 将多种输入格式统一整理为共享的 GPU 可用 Gaussian 资源构建流程。
+- 导入阶段默认对 Gaussian 数据做居中处理，便于放入场景。
+- 为新加入场景的 `GaussianSplatNode` 增加默认的 Z 轴朝向修正行为。
+- 扩展了 README、示例说明和插件版本元数据，形成 `1.1.0` 版本。
+
+### 1.0.0
+
+- 首个公开版本。
+- 支持标准 Gaussian `.ply` 导入。
+- 支持基于 compositor 的 Gaussian 渲染与场景深度合成。
+- 支持多节点同时渲染。
+- 支持编辑器预览、gizmo 和调试视图。
 
 ## 功能特性
 
 - 支持导入 `.ply`、`.compressed.ply`、`.splat` 和 `.sog` 格式的 Gaussian 资源。
-- 将不同输入格式统一转换为 GPU 可直接使用的 Gaussian 资源。
-- 导入时默认对 Gaussian 数据做归中处理。
-- `GaussianSplatNode` 默认附带 `-180` 度的 Z 轴旋转。
+- 将不同输入格式统一转换为共享的 GPU 可用 Gaussian 资源。
+- 导入构建时默认对 Gaussian 数据做居中处理。
+- 当 `GaussianSplatNode` 以默认朝向进入场景树时，会自动初始化一个 `-180` 度的 Z 轴修正。
 - 支持在同一场景中渲染一个或多个 `GaussianSplatNode`。
-- 通过 `WorldEnvironment.compositor` 与标准 Godot 3D 场景进行合成。
+- 通过 `WorldEnvironment.compositor` 与常规 Godot 3D 场景进行合成。
 - 基于场景深度缓冲进行遮挡混合。
 - 支持编辑器内预览和 gizmo 操作。
 - 内置 alpha、颜色、GS 深度、场景深度和深度剔除遮罩等调试视图。
@@ -38,8 +69,8 @@
 ## 安装方法
 
 1. 如果你的 Godot 项目里还没有 `addons` 目录，先创建它。
-2. 将本仓库中的 `gdgs` 文件夹复制到项目中，目标路径为 `addons/gdgs`。
-3. 用 Godot 打开项目。
+2. 将本仓库中的 `addons/gdgs` 文件夹复制到项目中，目标路径为 `addons/gdgs`。
+3. 使用 Godot 打开项目。
 4. 进入 `Project > Project Settings > Plugins`。
 5. 启用 `gdgs` 插件。
 
@@ -47,28 +78,28 @@
 
 ## 快速开始
 
-1. 将一个受支持的 Gaussian 资源加入项目。本仓库附带了 `demo.ply`、`demo.compressed.ply` 和 `demo.sog` 作为示例。
+1. 将一个受支持的 Gaussian 资源加入项目。本仓库附带了 `samples/assets/demo.ply`、`samples/assets/demo.compressed.ply` 和 `samples/assets/demo.sog` 作为示例。
 2. 等待 Godot 将其导入为资源。
 3. 在场景中添加一个 `GaussianSplatNode`。
 4. 将导入后的资源赋值给 `GaussianSplatNode` 的 `gaussian` 属性。
 5. 在场景中添加一个 `WorldEnvironment` 节点。
 6. 在 `WorldEnvironment.compositor` 上创建一个 `Compositor` 资源。
-7. 在该 `Compositor` 中添加一个 `CompositorEffect`，并将脚本设为 `res://addons/gdgs/postprocess.gd`。
+7. 在该 `Compositor` 中添加一个 `CompositorEffect`，并将脚本设为 `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`。
 8. 运行场景。
 
 ## 场景说明
 
 - `GaussianSplatNode` 只负责保存变换和资源引用，实际渲染由 compositor pass 完成，不走 Godot 标准 mesh 渲染管线。
 - 支持多个 `GaussianSplatNode` 同时存在，并在同一个 Gaussian pass 中统一渲染。
-- 导入后的 Gaussian 数据会按平均位置做归中处理，因此默认更接近场景原点。
-- `GaussianSplatNode` 默认带有 `-180` 度的 Z 轴旋转。如果你的源数据方向已经正确，可以在放入场景后自行调整节点变换。
+- 导入后的 Gaussian 数据会按平均位置做居中处理，因此默认更接近场景原点。
+- 新加入场景且仍为默认朝向的 `GaussianSplatNode` 会在进入场景树时只做一次 Z 轴修正，避免复制或序列化后的节点再次被重复修正。
 - 如果你替换了源资源文件内容，请在 Godot 中重新导入，以确保生成资源与源文件保持同步。
 
 ## 后处理参数
 
-compositor effect 脚本位于 `res://addons/gdgs/postprocess.gd`。
+compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`。
 
-- `alpha_cutoff`：alpha 低于该阈值的像素会在最终合成时被忽略。
+- `alpha_cutoff`：Alpha 低于该阈值的像素会在最终合成时被忽略。
 - `depth_bias`：GS 深度与场景深度比较时使用的小偏移量。
 - `depth_test_min_alpha`：只有当 GS alpha 高于该阈值时才应用深度剔除。
 - `debug_view`：调试输出模式。
@@ -112,18 +143,17 @@ compositor effect 脚本位于 `res://addons/gdgs/postprocess.gd`。
 
 ## 仓库结构
 
-- `gdgs/`：仓库中的插件根目录。复制到 Godot 项目后应位于 `addons/gdgs`。
-- `gdgs/gaussian`：导入器、解码器和 Gaussian 资源定义。
-- `gdgs/node`：场景节点和编辑器 gizmo。
-- `gdgs/rendering`：渲染管理器、渲染上下文和 compute shader。
-- `gdgs/postprocess.gd`：compositor effect 入口。
-- `demo.ply`：标准 Gaussian PLY 示例资源。
-- `demo.compressed.ply`：compressed Gaussian PLY 示例资源。
-- `demo.sog`：SOG 示例资源。
+- `addons/gdgs`：插件根目录。
+- `addons/gdgs/importers`：导入插件、解析器、解码器和资源构建器。
+- `addons/gdgs/runtime`：运行时节点、资源、compositor 代码和渲染模块。
+- `addons/gdgs/editor`：编辑器侧扩展，例如 gizmo。
+- `docs`：架构说明和内部 review 文档。
+- `samples/assets`：示例 Gaussian 资源。
+- `samples/media`：截图和调试图片。
 
 ## 已知限制
 
-- 当前仅面向桌面端 `Forward Plus` 渲染。
+- 当前仅面向桌面 `Forward Plus` 渲染。
 - 依赖 Godot 的 compositor 与 compute 管线，因此不支持 compatibility 和 mobile 渲染器。
 - 当前渲染管理器仍以共享的 root 级运行时管理器存在，复杂的编辑器多场景或多视口工作流仍需要进一步验证。
 - 标准 `.ply` 仅支持 Gaussian Splat 所需的二进制小端布局，不支持任意点云属性结构。
