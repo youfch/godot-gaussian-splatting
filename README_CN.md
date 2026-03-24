@@ -4,21 +4,79 @@
 
 [English README](README.md)
 
-当前插件版本：`2.0.0`
+当前插件版本：`2.1.0`
 
-`gdgs` 是一个基于 `CompositorEffect` 和 compute shader 的 Godot 4 Gaussian Splatting 插件。
+## 0x00 什么是 3DGS
 
-它可以导入受支持的 3D Gaussian Splat 资源，通过 `GaussianSplatNode` 放入场景，并结合场景深度与常规 3D 内容进行合成。
+3DGS（`3D Gaussian Splatting`）可以理解为一种新的三维渲染管线。它不再使用传统三角形 mesh 来表达场景，而是使用大量 3D Gaussian 原语来重建和渲染视图，因此通常能够带来更细腻、更高质量的实时渲染效果。
 
-## 演示
+### 效果展示
 
-![演示截图](samples/media/demo.png)
+以下 GIF 由 `gdgs-github` 目录下的视频转换而来：
 
-- 视频： [Bilibili - BV1NRwFzYEVc](https://www.bilibili.com/video/BV1NRwFzYEVc)
+| Room 0 | Room 1 |
+| --- | --- |
+| ![Room 0 showcase](samples/media/showcase-room0.gif) | ![Room 1 showcase](samples/media/showcase-room1.gif) |
 
-## 版本记录
+| Train | Truck |
+| --- | --- |
+| ![Train showcase](samples/media/showcase-train.gif) | ![Truck showcase](samples/media/showcase-truck.gif) |
+
+## 0x01 为什么需要这个插件
+
+3DGS 的渲染方式和 Godot 原生的 mesh 渲染管线并不相同，Godot 目前也没有内建完整的 3D Gaussian Splatting 导入、渲染和合成能力。
+
+`gdgs` 的作用就是把这部分能力补上：
+
+- 导入并管理受支持的 3DGS 资源。
+- 让 `GaussianSplatNode` 接入 Godot 场景工作流。
+- 通过 `CompositorEffect` 与常规 3D 内容进行混合渲染。
+- 基于场景深度完成遮挡、深度测试和深度合成。
+
+## 0x02 如何使用
+
+### 环境要求
+
+- Godot `4.4` 或更新版本。
+- 使用 `Forward Plus` 渲染后端。
+- 支持 compute shader 的桌面 GPU 和驱动。
+- 一份受支持格式的 Gaussian 资源文件。
+
+### 安装方法
+
+1. 如果你的 Godot 项目里还没有 `addons` 目录，先创建它。
+2. 将本仓库中的 `addons/gdgs` 文件夹复制到项目中，目标路径为 `addons/gdgs`。
+3. 使用 Godot 打开项目。
+4. 进入 `Project > Project Settings > Plugins`。
+5. 启用 `gdgs` 插件。
+
+安装完成后，插件根目录应位于 `res://addons/gdgs`。
+
+### 快速开始
+
+1. 将一个受支持的 Gaussian 资源加入项目。本仓库附带了 `samples/assets/demo.ply`、`samples/assets/demo.compressed.ply` 和 `samples/assets/demo.sog` 作为示例。
+2. 等待 Godot 将其导入为资源。
+3. 在场景中添加一个 `GaussianSplatNode`。
+4. 将导入后的资源赋值给 `GaussianSplatNode` 的 `gaussian` 属性。
+5. 在场景中添加一个 `WorldEnvironment` 节点。
+6. 在 `WorldEnvironment.compositor` 上创建一个 `Compositor` 资源。
+7. 在该 `Compositor` 中添加一个 `CompositorEffect`，并将脚本设为 `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`。
+8. 运行场景。
+
+## 0x03 版本记录
 
 版本说明：历史中的 `1.0` 在这里按 semver 统一记为 `1.0.0`。
+
+### 2.1.0
+
+- 修复了 Godot 4 compositor 路径下屏幕空间协方差投影回归问题，该问题会导致 splat 旋转方向错误。
+- 修正 2D 协方差投影链路，改为使用 `screen_transform = jacobian * mat3(view_matrix)` 和 `cov_2d = screen_transform * cov_3d * transpose(screen_transform)`。
+- 修复了 compositor / Vulkan 投影符号问题：`RenderData` 可能提供 `projection.y.y` 为负的投影矩阵以编码渲染目标 Y 翻转，旧逻辑会因此反转协方差投影使用的 Y 方向 clamp 范围。
+- 提升 Gaussian 导入器格式版本，强制仍然带有旧 `.res` 导入结果的 Godot 项目重新生成资源。
+
+| 2.1.0 之前 | 2.1.0 之后 |
+| --- | --- |
+| ![2.1.0 之前](samples/media/before_2.1.0.png) | ![2.1.0 之后](samples/media/after_2.1.0.png) |
 
 ### 2.0.0
 
@@ -47,7 +105,7 @@
 - 支持多节点同时渲染。
 - 支持编辑器预览、gizmo 和调试视图。
 
-## 功能特性
+## 0x04 功能特性
 
 - 支持导入 `.ply`、`.compressed.ply`、`.splat` 和 `.sog` 格式的 Gaussian 资源。
 - 将不同输入格式统一转换为共享的 GPU 可用 Gaussian 资源。
@@ -59,35 +117,7 @@
 - 支持编辑器内预览和 gizmo 操作。
 - 内置 alpha、颜色、GS 深度、场景深度和深度剔除遮罩等调试视图。
 
-## 环境要求
-
-- Godot `4.4` 或更新版本。
-- 使用 `Forward Plus` 渲染后端。
-- 支持 compute shader 的桌面 GPU 和驱动。
-- 一份受支持格式的 Gaussian 资源文件。
-
-## 安装方法
-
-1. 如果你的 Godot 项目里还没有 `addons` 目录，先创建它。
-2. 将本仓库中的 `addons/gdgs` 文件夹复制到项目中，目标路径为 `addons/gdgs`。
-3. 使用 Godot 打开项目。
-4. 进入 `Project > Project Settings > Plugins`。
-5. 启用 `gdgs` 插件。
-
-安装完成后，插件根目录应位于 `res://addons/gdgs`。
-
-## 快速开始
-
-1. 将一个受支持的 Gaussian 资源加入项目。本仓库附带了 `samples/assets/demo.ply`、`samples/assets/demo.compressed.ply` 和 `samples/assets/demo.sog` 作为示例。
-2. 等待 Godot 将其导入为资源。
-3. 在场景中添加一个 `GaussianSplatNode`。
-4. 将导入后的资源赋值给 `GaussianSplatNode` 的 `gaussian` 属性。
-5. 在场景中添加一个 `WorldEnvironment` 节点。
-6. 在 `WorldEnvironment.compositor` 上创建一个 `Compositor` 资源。
-7. 在该 `Compositor` 中添加一个 `CompositorEffect`，并将脚本设为 `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`。
-8. 运行场景。
-
-## 场景说明
+## 0x05 场景说明
 
 - `GaussianSplatNode` 只负责保存变换和资源引用，实际渲染由 compositor pass 完成，不走 Godot 标准 mesh 渲染管线。
 - 支持多个 `GaussianSplatNode` 同时存在，并在同一个 Gaussian pass 中统一渲染。
@@ -95,7 +125,7 @@
 - 新加入场景且仍为默认朝向的 `GaussianSplatNode` 会在进入场景树时只做一次 Z 轴修正，避免复制或序列化后的节点再次被重复修正。
 - 如果你替换了源资源文件内容，请在 Godot 中重新导入，以确保生成资源与源文件保持同步。
 
-## 后处理参数
+## 0x06 后处理参数
 
 compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_compositor_effect.gd`。
 
@@ -113,7 +143,7 @@ compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_co
 - `Scene Depth`：场景深度缓冲。
 - `Depth Reject Mask`：显示哪些 GS 像素因为深度测试被剔除。
 
-## 支持的格式
+## 0x07 支持的格式
 
 ### 标准 Gaussian `.ply`
 
@@ -141,7 +171,7 @@ compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_co
 
 该导入器面向 Gaussian Splatting 风格资源，不适用于通用点云文件。
 
-## 仓库结构
+## 0x08 仓库结构
 
 - `addons/gdgs`：插件根目录。
 - `addons/gdgs/importers`：导入插件、解析器、解码器和资源构建器。
@@ -151,7 +181,7 @@ compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_co
 - `samples/assets`：示例 Gaussian 资源。
 - `samples/media`：截图和调试图片。
 
-## 已知限制
+## 0x09 已知限制
 
 - 当前仅面向桌面 `Forward Plus` 渲染。
 - 依赖 Godot 的 compositor 与 compute 管线，因此不支持 compatibility 和 mobile 渲染器。
@@ -159,17 +189,17 @@ compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_co
 - 标准 `.ply` 仅支持 Gaussian Splat 所需的二进制小端布局，不支持任意点云属性结构。
 - `.sog` 当前仅支持 `v2` 格式。
 
-## 致谢
+## 0x0A 致谢
 
 - 本项目中的 shader 实现参考了 [2Retr0/GodotGaussianSplatting](https://github.com/2Retr0/GodotGaussianSplatting)。感谢 2Retr0 公开该项目。
 - 上游 `2Retr0/GodotGaussianSplatting` 仓库采用 MIT License。若你复用与其实现密切相关的衍生内容，请同时检查并保留相应的上游许可说明。
 - radix sort 相关 shader 文件也保留了各自的上游来源说明，详见对应 shader 文件头部注释。
 
-## 参考资料
+## 0x0B 参考资料
 
 - [2Retr0/GodotGaussianSplatting](https://github.com/2Retr0/GodotGaussianSplatting)
 - [3D Gaussian Splatting for Real-Time Radiance Field Rendering](https://arxiv.org/abs/2308.04079)
 
-## 许可证
+## 0x0C 许可证
 
 本项目采用 [MIT License](LICENSE)。
