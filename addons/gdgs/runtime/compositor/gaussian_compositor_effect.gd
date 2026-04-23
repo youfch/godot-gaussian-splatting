@@ -213,15 +213,11 @@ func _render_callback(_effect_callback_type: int, render_data: RenderData) -> vo
 func _get_camera_data(scene_data: RenderSceneDataRD, view: int) -> Dictionary:
 	if scene_data == null:
 		return {}
-	if not scene_data.has_method("get_cam_transform") or not scene_data.has_method("get_cam_projection"):
+	if not scene_data.has_method("get_cam_transform") or not scene_data.has_method("get_view_projection"):
 		return {}
-
 	var camera_transform: Transform3D = scene_data.get_cam_transform()
-	var camera_projection: Projection = scene_data.get_cam_projection()
+	var camera_projection: Projection = scene_data.get_view_projection(view)
 	var world_position: Vector3 = camera_transform.origin
-
-	if scene_data.has_method("get_view_eye_offset"):
-		world_position += scene_data.get_view_eye_offset(view)
 
 	return {
 		"transform": camera_transform,
