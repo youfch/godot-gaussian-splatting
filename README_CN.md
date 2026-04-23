@@ -4,7 +4,15 @@
 
 [English README](README.md)
 
-当前插件版本：`2.1.0`
+当前插件版本：`2.2.0`
+
+## 新闻
+
+- 2026-04-20：GameFromScratch 发布了对本插件的文章介绍：[Gaussian Splats in Godot](https://gamefromscratch.com/gaussian-splats-in-godot/)
+- 2026-04-20：GameFromScratch 在 YouTube 发布了本插件的视频介绍：[观看视频](https://www.youtube.com/watch?v=VfGYLlDHdrw)
+- 2026-03-31：合并了社区贡献 [PR #6](https://github.com/ReconWorldLab/godot-gaussian-splatting/pull/6)，补充了编辑器图标、可见性联动和实例化复用支持。
+- 2026-03-27：在 [GitHub Releases 页面](https://github.com/ReconWorldLab/godot-gaussian-splatting/releases) 发布了打包版本。
+- 2026-03-11：在 [Bilibili](https://www.bilibili.com/video/BV1NRwFzYEVc) 发布了项目介绍视频。
 
 ## 0x00 什么是 3DGS
 
@@ -66,6 +74,13 @@
 ## 0x03 版本记录
 
 版本说明：历史中的 `1.0` 在这里按 semver 统一记为 `1.0.0`。
+
+### 2.2.0
+
+- 为 `GaussianSplatNode` 和 Gaussian 资源补充编辑器图标。
+- 补齐 Gaussian 实例对运行时 / 编辑器可见性切换的联动响应。
+- 增加实例化复用支持，使多个节点可以共享同一份 Gaussian 数据，避免重复上传 GPU splat 数据。
+- 修复 VR 渲染支持，改为使用正确的、带 eye offset 的 view projection 路径。
 
 ### 2.1.0
 
@@ -185,6 +200,7 @@ compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_co
 
 - 当前仅面向桌面 `Forward Plus` 渲染。
 - 依赖 Godot 的 compositor 与 compute 管线，因此不支持 compatibility 和 mobile 渲染器。
+- 在 4K 显示器下，如果显存压力过高，可能会出现渲染错误或画面异常；将 Godot 视口分辨率调低后通常会有所缓解。该限制来源于 [issue #3](https://github.com/ReconWorldLab/godot-gaussian-splatting/issues/3)。
 - 当前渲染管理器仍以共享的 root 级运行时管理器存在，复杂的编辑器多场景或多视口工作流仍需要进一步验证。
 - 标准 `.ply` 仅支持 Gaussian Splat 所需的二进制小端布局，不支持任意点云属性结构。
 - `.sog` 当前仅支持 `v2` 格式。
@@ -192,6 +208,7 @@ compositor effect 脚本位于 `res://addons/gdgs/runtime/compositor/gaussian_co
 ## 0x0A 致谢
 
 - 本项目中的 shader 实现参考了 [2Retr0/GodotGaussianSplatting](https://github.com/2Retr0/GodotGaussianSplatting)。感谢 2Retr0 公开该项目。
+- 感谢 [@4321ba](https://github.com/4321ba) 提交 [PR #6](https://github.com/ReconWorldLab/godot-gaussian-splatting/pull/6)，为项目补充了编辑器图标、可见性联动处理，以及共享 Gaussian 数据的实例化复用支持。
 - 上游 `2Retr0/GodotGaussianSplatting` 仓库采用 MIT License。若你复用与其实现密切相关的衍生内容，请同时检查并保留相应的上游许可说明。
 - radix sort 相关 shader 文件也保留了各自的上游来源说明，详见对应 shader 文件头部注释。
 

@@ -4,7 +4,15 @@ Maintainer: ReconWorldLab
 
 [Chinese README](README_CN.md)
 
-Current plugin version: `2.1.0`
+Current plugin version: `2.2.0`
+
+## News
+
+- 2026-04-20: Featured by [GameFromScratch in an article](https://gamefromscratch.com/gaussian-splats-in-godot/).
+- 2026-04-20: Covered by [GameFromScratch on YouTube](https://www.youtube.com/watch?v=VfGYLlDHdrw).
+- 2026-03-31: Merged community contribution [PR #6](https://github.com/ReconWorldLab/godot-gaussian-splatting/pull/6), adding icons, visibility handling, and instancing support.
+- 2026-03-27: Published a packaged release on the [GitHub Releases page](https://github.com/ReconWorldLab/godot-gaussian-splatting/releases).
+- 2026-03-11: Project introduction video published on [Bilibili](https://www.bilibili.com/video/BV1NRwFzYEVc).
 
 ## 0x00 What Is 3DGS
 
@@ -66,6 +74,13 @@ After installation, the plugin root should be available at `res://addons/gdgs`.
 ## 0x03 Version History
 
 Versioning note: the historical `1.0` release is normalized here as `1.0.0`.
+
+### 2.2.0
+
+- Added editor icons for `GaussianSplatNode` and Gaussian resources.
+- Added visibility propagation so Gaussian instances respect runtime/editor visibility toggles.
+- Added instancing support so multiple nodes can share the same Gaussian data without duplicating GPU splat uploads.
+- Fixed VR rendering support by using the correct view-projection path with eye offsets.
 
 ### 2.1.0
 
@@ -185,6 +200,7 @@ This importer is meant for Gaussian Splatting style assets, not generic point cl
 
 - The plugin currently targets desktop `Forward Plus` rendering only.
 - Rendering depends on Godot's compositor and compute pipeline, so compatibility and mobile renderers are not supported.
+- On 4K displays, rendering errors or visual glitches may occur when GPU memory pressure becomes too high. Reducing the Godot viewport resolution may help. Reported in [issue #3](https://github.com/ReconWorldLab/godot-gaussian-splatting/issues/3).
 - The render manager currently lives as a shared root-level runtime manager, so very complex editor multi-scene or multi-viewport workflows may still need additional validation.
 - Standard `.ply` support expects binary little-endian Gaussian Splat data, not arbitrary point cloud layouts.
 - `.sog` support currently targets version `2` archives only.
@@ -192,6 +208,7 @@ This importer is meant for Gaussian Splatting style assets, not generic point cl
 ## 0x0A Acknowledgements
 
 - The shader work in this plugin was developed with reference to [2Retr0/GodotGaussianSplatting](https://github.com/2Retr0/GodotGaussianSplatting). Thanks to 2Retr0 for publishing that project.
+- Thanks to [@4321ba](https://github.com/4321ba) for [PR #6](https://github.com/ReconWorldLab/godot-gaussian-splatting/pull/6), which contributed editor icons, visibility handling improvements, and instancing support for shared Gaussian data.
 - The upstream `2Retr0/GodotGaussianSplatting` repository is published under the MIT License. If you reuse or redistribute closely related derivative work, review and retain the relevant upstream license notice.
 - The radix sort shader files also retain their own upstream attribution headers, as documented in the shader sources.
 
